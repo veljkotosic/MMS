@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.AspNetCore" Version="2.64.0" />
+        <PackageReference Include="System.Drawing.Common" Version="10.0.8" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MMS.Application\MMS.Application.csproj" />
+      <ProjectReference Include="..\MMS.Contracts\MMS.Contracts.csproj" />
+      <ProjectReference Include="..\MMS.Infrastructure\MMS.Infrastructure.csproj" />
+    </ItemGroup>
+
+</Project>

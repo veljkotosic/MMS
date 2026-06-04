@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option csharp_namespace = "MMS.Contracts";
+
+package image_processor;
+
+service ImageProcessor {
+  rpc ProcessImage(stream ProcessImageRequest) returns (stream ProcessImageResponse);
+}
+
+message ProcessImageRequest {
+  oneof payload {
+    ImageHeader header = 1;
+    ImageChunk chunk = 2;
+  }
+}
+
+message ImageHeader {
+  int32 width = 1;
+  int32 height = 2;
+  repeated FilterType filters = 3;
+}
+
+enum FilterType {
+  GRAYSCALE = 0;
+}
+
+message ImageChunk {
+  bytes data = 1;
+}
+
+message ProcessImageResponse {
+  bytes chunk = 1;
+}
