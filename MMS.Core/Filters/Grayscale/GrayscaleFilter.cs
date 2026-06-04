@@ -8,16 +8,16 @@ public sealed class GrayscaleFilter(GrayscaleFilterOptions options) : IImageFilt
 {
     public void Execute(Bitmap bitmap)
     {
-        int width = bitmap.Width;
-        int height = bitmap.Height;
+        var width = bitmap.Width;
+        var height = bitmap.Height;
         
         var rect = new Rectangle(0, 0, width, height);
         var data = bitmap.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
 
         try
         {
-            int totalPixels = width * height;
-            int chunkSize = totalPixels / Environment.ProcessorCount;
+            var totalPixels = width * height;
+            var chunkSize = totalPixels / Environment.ProcessorCount;
 
             unsafe
             {

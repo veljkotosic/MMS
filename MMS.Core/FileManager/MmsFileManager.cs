@@ -16,8 +16,9 @@ public class MmsFileManager :
         using var reader = new BinaryReader(stream);
         var crc32 = new Crc32();
 
-        int headerSize = Marshal.SizeOf<MmsHeader>();
-        byte[] headerBytes = reader.ReadBytes(headerSize);
+        var headerSize = Marshal.SizeOf<MmsHeader>();
+        var headerBytes = reader.ReadBytes(headerSize);
+        
         if (headerBytes.Length < headerSize)
         {
             throw new InvalidDataException("Invalid header.");
@@ -38,17 +39,18 @@ public class MmsFileManager :
         }        
         
         byte[] meta = [];
+        
         if (header.MetadataLength > 0)
         {
             meta = reader.ReadBytes((int)header.MetadataLength);
             crc32.Append(meta);           
         }
         
-        byte[] pixels = reader.ReadBytes((int)header.PixelsLength);
+        var pixels = reader.ReadBytes((int)header.PixelsLength);
         crc32.Append(pixels);       
         
-        uint storedCrc = reader.ReadUInt32();
-        uint calculatedCrc = crc32.GetCurrentHashAsUInt32();
+        var storedCrc = reader.ReadUInt32();
+        var calculatedCrc = crc32.GetCurrentHashAsUInt32();
 
         if (calculatedCrc != storedCrc)
         {
@@ -72,7 +74,8 @@ public class MmsFileManager :
         using var writer = new BinaryWriter(stream);
         var crc32 = new Crc32();       
 
-        byte[] headerBytes = StructureUtility.StructureToBytes(data.Header);
+        var headerBytes = StructureUtility.StructureToBytes(data.Header);
+        
         writer.Write(headerBytes);
         crc32.Append(headerBytes);      
 

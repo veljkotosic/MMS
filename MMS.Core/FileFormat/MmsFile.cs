@@ -68,7 +68,8 @@ public sealed class MmsFile
         var pixelFormat = Header.Channels == 4 ? PixelFormat.Format32bppArgb : PixelFormat.Format24bppRgb;
         var bmpData = bitmap.LockBits(rect, ImageLockMode.ReadOnly, pixelFormat);
 
-        byte[] rawBytes = new byte[Header.Width * Header.Height * Header.Channels];
+        var rawBytes = new byte[Header.Width * Header.Height * Header.Channels];
+        
         try
         {
             for (int y = 0; y < Header.Height; y++)

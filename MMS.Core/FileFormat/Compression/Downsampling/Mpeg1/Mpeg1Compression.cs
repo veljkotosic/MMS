@@ -55,7 +55,7 @@ public class Mpeg1Compression :
         
         var decompressedBlocks = shannonFano.Decompress(data, metadata, width, height, channels);
 
-        int blockIdx = 0;
+        var blockIdx = 0;
         
         var yPlane = DeprocessPlane(decompressedBlocks, ref blockIdx, width, height, QuantizationTables.Luma);
         var cbSub = DeprocessPlane(decompressedBlocks, ref blockIdx, width / 2, height / 2, QuantizationTables.Chroma);
@@ -74,8 +74,8 @@ public class Mpeg1Compression :
         {
             for (int i = 0; i < width; i++)
             {
-                int idx = (j * width + i) * channels;
-                yPlane[j * width + i] = data[idx];
+                var index = (j * width + i) * channels;
+                yPlane[j * width + i] = data[index];
 
                 if (j % 2 == 0 && i % 2 == 0 && (j / 2) < (height / 2) && (i / 2) < (width / 2))
                 {
@@ -117,15 +117,15 @@ public class Mpeg1Compression :
         {
             for (int i = 0; i < width; i++)
             {
-                int rIdx = (j * width + i) * channels;
+                int rIndex = (j * width + i) * channels;
                 
-                result[rIdx] = yPlane[j * width + i];
-                result[rIdx + 1] = cbPlane[j / 2 * (width / 2) + i / 2];
-                result[rIdx + 2] = crPlane[j / 2 * (width / 2) + i / 2];
+                result[rIndex] = yPlane[j * width + i];
+                result[rIndex + 1] = cbPlane[j / 2 * (width / 2) + i / 2];
+                result[rIndex + 2] = crPlane[j / 2 * (width / 2) + i / 2];
                 
                 if (channels == 4)
                 {
-                    result[rIdx + 3] = 255;
+                    result[rIndex + 3] = 255;
                 }
             }
         }
@@ -133,7 +133,7 @@ public class Mpeg1Compression :
         return result;
     }
 
-    private void ProcessPlane(byte[] plane, int width, int height, byte[] quantizationTable, List<byte> output)
+    private static void ProcessPlane(byte[] plane, int width, int height, byte[] quantizationTable, List<byte> output)
     {
         for (int y = 0; y < height; y += 8)
         {
@@ -151,9 +151,9 @@ public class Mpeg1Compression :
         }
     }
 
-    private byte[] DeprocessPlane(byte[] data, ref int startIndex, int width, int height, byte[] quantizationTable)
+    private static byte[] DeprocessPlane(byte[] data, ref int startIndex, int width, int height, byte[] quantizationTable)
     {
-        byte[] plane = new byte[width * height];
+        var plane = new byte[width * height];
         
         for (int y = 0; y < height; y += 8)
         {

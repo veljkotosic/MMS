@@ -81,8 +81,8 @@ public class ShannonFanoCompression :
         
         int dictionarySize = metadataReader.ReadUInt16();
         
-        ShannonFanoTreeNode root = new ShannonFanoTreeNode();
-        LookUpTableEntry[] lut = new LookUpTableEntry[256]; 
+        var root = new ShannonFanoTreeNode();
+        var lookUpTable = new LookUpTableEntry[256]; 
 
         for (int i = 0; i < dictionarySize; i++)
         {
@@ -90,7 +90,7 @@ public class ShannonFanoCompression :
             var codeLen = metadataReader.ReadByte();
             var code = metadataReader.ReadString();
 
-            ShannonFanoTreeNode current = root;
+            var current = root;
             foreach (var bit in code)
             {
                 if (bit == '0')
@@ -109,7 +109,7 @@ public class ShannonFanoCompression :
             if (codeLen <= 8)
             {
                 var numericCode = 0;
-                foreach (char bit in code)
+                foreach (var bit in code)
                 {
                     numericCode = (numericCode << 1) | (bit == '1' ? 1 : 0);
                 }
@@ -120,7 +120,7 @@ public class ShannonFanoCompression :
 
                 for (int j = start; j < end; j++)
                 {
-                    lut[j] = new LookUpTableEntry
+                    lookUpTable[j] = new LookUpTableEntry
                     {
                         Value = value,
                         Length = codeLen,
@@ -149,7 +149,7 @@ public class ShannonFanoCompression :
             }
 
             var peek = (int)((bitBuffer >> (bitsInDrawingBuffer - 8)) & 0xFF);
-            var entry = lut[peek];
+            var entry = lookUpTable[peek];
 
             if (entry.IsValid)
             {
@@ -158,7 +158,7 @@ public class ShannonFanoCompression :
             }
             else
             {
-                ShannonFanoTreeNode currentNode = root;
+                var currentNode = root;
                 
                 while (!currentNode.Value.HasValue)
                 {
@@ -197,10 +197,10 @@ public class ShannonFanoCompression :
 
     private static int FindSplitIndex(List<Symbol> symbols)
     {
-        long total = symbols.Sum(s => (long)s.Frequency);
+        var total = symbols.Sum(s => (long)s.Frequency);
         long currentSum = 0;
-        long minDifference = total;
-        int splitIndex = 1;
+        var minDifference = total;
+        var splitIndex = 1;
 
         for (int i = 0; i < symbols.Count - 1; i++)
         {
@@ -213,6 +213,7 @@ public class ShannonFanoCompression :
                 splitIndex = i + 1;
             }
         }
+        
         return splitIndex;
     }
 }

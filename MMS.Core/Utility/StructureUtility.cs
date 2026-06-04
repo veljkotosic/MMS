@@ -7,8 +7,8 @@ internal static class StructureUtility
     internal static byte[] StructureToBytes<T>(T structure) 
         where T : struct
     {
-        int size = Marshal.SizeOf(structure);
-        byte[] bytes = new byte[size];
+        var size = Marshal.SizeOf(structure);
+        var bytes = new byte[size];
         
         IntPtr ptr = Marshal.AllocHGlobal(size);
         
@@ -22,7 +22,7 @@ internal static class StructureUtility
     internal static T BytesToStructure<T>(byte[] bytes)
         where T : struct
     {
-        int size = Marshal.SizeOf<T>();
+        var size = Marshal.SizeOf<T>();
         IntPtr ptr = Marshal.AllocHGlobal(size);
         
         Marshal.Copy(bytes, 0, ptr, size);

@@ -6,6 +6,7 @@ public class LinearToRgbColorspaceConverter
     public byte[] Convert(byte[] pixels, int width, int height, int channels)
     {
         var result = new byte[pixels.Length];
+        
         for (int i = 0; i < pixels.Length; i++)
         {
             if (channels == 4 && (i + 1) % 4 == 0)
@@ -14,12 +15,12 @@ public class LinearToRgbColorspaceConverter
                 continue;
             }
 
-            double val = pixels[i] / 255.0;
-            double sRgbVal = val <= 0.0031308
-                ? val * 12.92
-                : 1.055 * Math.Pow(val, 1.0 / 2.4) - 0.055;
+            var value = pixels[i] / 255.0;
+            var rgbValue = value <= 0.0031308
+                ? value * 12.92
+                : 1.055 * Math.Pow(value, 1.0 / 2.4) - 0.055;
 
-            result[i] = (byte)Math.Clamp(Math.Round(sRgbVal * 255.0), 0, 255);
+            result[i] = (byte)Math.Clamp(Math.Round(rgbValue * 255.0), 0, 255);
         }
 
         return result;
