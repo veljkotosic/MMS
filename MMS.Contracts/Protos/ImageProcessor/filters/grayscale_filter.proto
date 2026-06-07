@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option csharp_namespace = "MMS.Contracts";
+
+package image_processor;
+
+message GrayscaleFilter {
+  int32 RMul = 1;
+  int32 GMul = 2;
+  int32 BMul = 3;
+}

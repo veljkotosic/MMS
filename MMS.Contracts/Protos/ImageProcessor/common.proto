@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option csharp_namespace = "MMS.Contracts";
+
+package image_processor;
+
+message ImageChunk {
+  bytes Data = 1;
+}
+
+message ProcessImageResult {
+  int64 TotalProcessingTimeMs = 1;
+  repeated FilterProcessingTime FilterTimes = 2;
+}
+
+message FilterProcessingTime {
+  int32 FilterIndex = 1;
+  string FilterName = 2;
+  int64 ProcessingTimeMs = 3;
+}

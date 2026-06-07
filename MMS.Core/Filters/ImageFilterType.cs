@@ -1,4 +1,4 @@
-namespace MMS.Core.Filters.Enums;
+namespace MMS.Core.Filters;
 
 public enum ImageFilterType
 {

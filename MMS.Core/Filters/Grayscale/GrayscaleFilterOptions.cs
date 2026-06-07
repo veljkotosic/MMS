@@ -16,7 +16,6 @@ public class GrayscaleFilterOptions
     [DisplayName("Blue Multiplier")]
     public int BMul { get; set; } = 117;
 
-    [Category("Operation")]
-    [DisplayName("Bit Shift")]
+    [Browsable(false)]
     public int Shift { get; set; } = 10;
 }

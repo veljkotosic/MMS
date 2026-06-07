@@ -15,8 +15,6 @@ public class Program
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
-        app.MapGrpcService<GreeterService>();
         app.MapGrpcService<ImageProcessorService>();
         app.MapGet("/",
             () =>

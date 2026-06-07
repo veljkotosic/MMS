@@ -1,6 +1,5 @@
 using System.Drawing;
 using System.Drawing.Imaging;
-using MMS.Core.Filters.Abstract;
 
 namespace MMS.Core.Filters.Grayscale;
 

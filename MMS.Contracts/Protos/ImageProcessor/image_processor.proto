@@ -4,31 +4,29 @@ option csharp_namespace = "MMS.Contracts";
 
 package image_processor;
 
+import "ImageProcessor/common.proto";
+import "ImageProcessor/filters/filter.proto";
+
 service ImageProcessor {
   rpc ProcessImage(stream ProcessImageRequest) returns (stream ProcessImageResponse);
 }
 
 message ProcessImageRequest {
   oneof payload {
-    ImageHeader header = 1;
-    ImageChunk chunk = 2;
+    ImageHeader Header = 1;
+    ImageChunk Chunk = 2;
   }
 }
 
 message ImageHeader {
-  int32 width = 1;
-  int32 height = 2;
-  repeated FilterType filters = 3;
+  int32 Width = 1;
+  int32 Height = 2;
+  repeated ImageFilter Filters = 4;
 }
 
-enum FilterType {
-  GRAYSCALE = 0;
-}
-
-message ImageChunk {
-  bytes data = 1;
-}
-
-message ProcessImageResponse {
-  bytes chunk = 1;
+message ProcessImageResponse {  
+  oneof payload {
+    ProcessImageResult Result = 1;
+    ImageChunk Chunk = 2;
+  }
 }

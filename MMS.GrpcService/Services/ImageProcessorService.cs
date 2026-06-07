@@ -1,125 +1,140 @@
+using Google.Protobuf;
 using Grpc.Core;
 using MMS.Application.Abstract.Dispatcher;
-using MMS.Application.Commands.BatchApplyFilters;
+using MMS.Application.Commands.ProcessImage;
 using MMS.Contracts;
-using MMS.Core.Filters.Enums;
-using System.Runtime.InteropServices;
-using Google.Protobuf;
-using System.Drawing;
-using System.Drawing.Imaging;
+using MMS.Core.Filters;
+using MMS.Core.Filters.Grayscale;
 
 namespace MMS.GrpcService.Services;
 
-public class ImageProcessorService : ImageProcessor.ImageProcessorBase
+public sealed class ImageProcessorService(
+    IDispatcher dispatcher,
+    ILogger<ImageProcessorService> logger) : ImageProcessor.ImageProcessorBase
 {
-    private readonly IDispatcher _dispatcher;
-
-    public ImageProcessorService(IDispatcher dispatcher)
-    {
-        _dispatcher = dispatcher;
-    }
+    private const int ChunkSize = 64 * 1024;
 
     public override async Task ProcessImage(
         IAsyncStreamReader<ProcessImageRequest> requestStream,
         IServerStreamWriter<ProcessImageResponse> responseStream,
         ServerCallContext context)
     {
-        ImageHeader? header = null;
-        using var ms = new MemoryStream();
+        logger.LogInformation("Started image processing request {RequestId}.", context.GetHttpContext().TraceIdentifier);
+
         try
         {
-            await foreach (var request in requestStream.ReadAllAsync(context.CancellationToken))
-            {
-                switch (request.PayloadCase)
-                {
-                    case ProcessImageRequest.PayloadOneofCase.Header: 
-                        header = request.Header; 
-                        break;
-                    case ProcessImageRequest.PayloadOneofCase.Chunk:
-                        await ms.WriteAsync(request.Chunk.Data.Memory, context.CancellationToken); 
-                        break;
-                }
-            }
+            var command = await ParseCommandAsync(requestStream, context.CancellationToken);
+            logger.LogInformation(
+                "Parsed image processing request {RequestId}: {Width}x{Height}, {FilterCount} filter/s",
+                context.GetHttpContext().TraceIdentifier,
+                command.Width,
+                command.Height,
+                command.Filters.Count);
 
-            if (header == null)
-            {
-                throw new RpcException(new Status(StatusCode.InvalidArgument, "Header is missing"));
-            }
+            var result = await dispatcher.ExecuteAsync(command, context.CancellationToken);
 
-            int width = header.Width;
-            int height = header.Height;
-            int bytesPerPixel = 4;
-            long expectedSize = (long)width * height * bytesPerPixel;
-            
-            if (ms.Length != expectedSize)
-            {
-                throw new RpcException(new Status(StatusCode.InvalidArgument, $"Invalid image data size. Expected {expectedSize}, got {ms.Length}"));
-            }
+            await WriteResultAsync(responseStream, result, context.CancellationToken);
 
-            var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            var rect = new Rectangle(0, 0, width, height);
-            var bmpData = bitmap.LockBits(rect, ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            
-            try
-            {
-                byte[] bytes = ms.ToArray();
-                Marshal.Copy(bytes, 0, bmpData.Scan0, bytes.Length);
-            }
-            finally
-            {
-                bitmap.UnlockBits(bmpData);
-            }
-
-            var filters = header.Filters.Select(MapFilterType).ToList();
-            
-            var command = new BatchApplyFiltersCommand(bitmap, filters);
-            var result = await _dispatcher.ExecuteAsync(command, context.CancellationToken);
-            
-            var resultBitmap = result.Bitmap;
-            var resultBmpData = resultBitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-            
-            byte[] resultBytes = new byte[expectedSize];
-            
-            try
-            {
-                Marshal.Copy(resultBmpData.Scan0, resultBytes, 0, resultBytes.Length);
-            }
-            finally
-            {
-                resultBitmap.UnlockBits(resultBmpData);
-            }
-
-            int chunkSize = 64 * 1024;
-            
-            for (int i = 0; i < resultBytes.Length; i += chunkSize)
-            {
-                int length = Math.Min(chunkSize, resultBytes.Length - i);
-                await responseStream.WriteAsync(new ProcessImageResponse
-                {
-                    Chunk = ByteString.CopyFrom(resultBytes, i, length)
-                });
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            
-        }
-        catch (RpcException)
-        {
-            throw;
+            logger.LogInformation(
+                "Completed image processing request {RequestId}: {FilterCount} filters in {ProcessingTimeMs} ms.",
+                context.GetHttpContext().TraceIdentifier,
+                result.FilterTimes.Count,
+                result.TotalProcessingTimeMs);
         }
         catch (Exception ex)
         {
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+            logger.LogError(
+                ex,
+                "Image processing request {RequestId} failed.",
+                context.GetHttpContext().TraceIdentifier);
+            throw;
         }
     }
 
-    private static ImageFilterType MapFilterType(FilterType type)
+    private static async Task<ProcessImageCommand> ParseCommandAsync(
+        IAsyncStreamReader<ProcessImageRequest> requestStream,
+        CancellationToken cancellationToken)
     {
-        return type switch
+        ImageHeader? header = null;
+        using var imageStream = new MemoryStream();
+
+        await foreach (var request in requestStream.ReadAllAsync(cancellationToken))
         {
-            FilterType.Grayscale => ImageFilterType.Grayscale,
-            _ => ImageFilterType.Unknown
+            switch (request.PayloadCase)
+            {
+                case ProcessImageRequest.PayloadOneofCase.Header when header == null:
+                    header = request.Header;
+                    break;
+                case ProcessImageRequest.PayloadOneofCase.Header:
+                    throw new ArgumentException("Duplicate header.");
+                case ProcessImageRequest.PayloadOneofCase.Chunk:
+                    await imageStream.WriteAsync(request.Chunk.Data.Memory, cancellationToken);
+                    break;
+                default:
+                    throw new ArgumentException("Request payload is missing.");
+            }
+        }
+
+        if (header == null)
+        {
+            throw new ArgumentException("Header is missing.");
+        }
+
+        return new ProcessImageCommand(
+            header.Width,
+            header.Height,
+            imageStream.ToArray(),
+            header.Filters.Select(ParseFilter).ToList());
+    }
+
+    private static IImageFilter ParseFilter(ImageFilter filter)
+    {
+        return filter.FilterCase switch
+        {
+            ImageFilter.FilterOneofCase.Grayscale =>
+                new Core.Filters.Grayscale.GrayscaleFilter(new GrayscaleFilterOptions
+                {
+                    RMul = filter.Grayscale.RMul,
+                    GMul = filter.Grayscale.GMul,
+                    BMul = filter.Grayscale.BMul
+                }),
+            _ => throw new ArgumentException("Filter type is missing or unsupported.")
         };
+    }
+
+    private static async Task WriteResultAsync(
+        IServerStreamWriter<ProcessImageResponse> responseStream,
+        ProcessImageCommandResult result,
+        CancellationToken cancellationToken)
+    {
+        var responseResult = new ProcessImageResult
+        {
+            TotalProcessingTimeMs = result.TotalProcessingTimeMs
+        };
+
+        responseResult.FilterTimes.Add(result.FilterTimes.Select(item => new FilterProcessingTime
+        {
+            FilterIndex = item.FilterIndex,
+            FilterName = item.FilterName,
+            ProcessingTimeMs = item.ProcessingTimeMs
+        }));
+
+        await responseStream.WriteAsync(
+            new ProcessImageResponse { Result = responseResult },
+            cancellationToken);
+
+        for (var offset = 0; offset < result.ImageData.Length; offset += ChunkSize)
+        {
+            var length = Math.Min(ChunkSize, result.ImageData.Length - offset);
+            await responseStream.WriteAsync(
+                new ProcessImageResponse
+                {
+                    Chunk = new ImageChunk
+                    {
+                        Data = ByteString.CopyFrom(result.ImageData, offset, length)
+                    }
+                },
+                cancellationToken);
+        }
     }
 }

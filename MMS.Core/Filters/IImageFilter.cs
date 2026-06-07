@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace MMS.Core.Filters.Abstract;
+namespace MMS.Core.Filters;
 
 public interface IImageFilter
 {
