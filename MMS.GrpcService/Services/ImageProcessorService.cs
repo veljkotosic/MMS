@@ -10,7 +10,8 @@ namespace MMS.GrpcService.Services;
 
 public sealed class ImageProcessorService(
     IDispatcher dispatcher,
-    ILogger<ImageProcessorService> logger) : ImageProcessor.ImageProcessorBase
+    ILogger<ImageProcessorService> logger) 
+    : ImageProcessor.ImageProcessorBase
 {
     private const int ChunkSize = 64 * 1024;
 
@@ -19,13 +20,13 @@ public sealed class ImageProcessorService(
         IServerStreamWriter<ProcessImageResponse> responseStream,
         ServerCallContext context)
     {
-        logger.LogInformation("Started image processing request {RequestId}.", context.GetHttpContext().TraceIdentifier);
+        logger.LogInformation("Processing request {RequestId}.", context.GetHttpContext().TraceIdentifier);
 
         try
         {
-            var command = await ParseCommandAsync(requestStream, context.CancellationToken);
+            var command = await MapCommandAsync(requestStream, context.CancellationToken);
             logger.LogInformation(
-                "Parsed image processing request {RequestId}: {Width}x{Height}, {FilterCount} filter/s",
+                "Request {RequestId}: {Width}x{Height}, {FilterCount} filter/s",
                 context.GetHttpContext().TraceIdentifier,
                 command.Width,
                 command.Height,
@@ -36,22 +37,23 @@ public sealed class ImageProcessorService(
             await WriteResultAsync(responseStream, result, context.CancellationToken);
 
             logger.LogInformation(
-                "Completed image processing request {RequestId}: {FilterCount} filters in {ProcessingTimeMs} ms.",
+                "Request {RequestId}: Executed {FilterCount} filter/s in {ProcessingTimeMs}ms.",
                 context.GetHttpContext().TraceIdentifier,
                 result.FilterTimes.Count,
                 result.TotalProcessingTimeMs);
         }
         catch (Exception ex)
         {
-            logger.LogError(
-                ex,
-                "Image processing request {RequestId} failed.",
-                context.GetHttpContext().TraceIdentifier);
+            logger.LogError(ex, "Request {RequestId} failed.", context.GetHttpContext().TraceIdentifier);
             throw;
+        }
+        finally
+        {
+            logger.LogInformation("Request {RequestId} completed.", context.GetHttpContext().TraceIdentifier);
         }
     }
 
-    private static async Task<ProcessImageCommand> ParseCommandAsync(
+    private static async Task<ProcessImageCommand> MapCommandAsync(
         IAsyncStreamReader<ProcessImageRequest> requestStream,
         CancellationToken cancellationToken)
     {
@@ -84,10 +86,10 @@ public sealed class ImageProcessorService(
             header.Width,
             header.Height,
             imageStream.ToArray(),
-            header.Filters.Select(ParseFilter).ToList());
+            header.Filters.Select(MapFilter).ToList());
     }
 
-    private static IImageFilter ParseFilter(ImageFilter filter)
+    private static IImageFilter MapFilter(ImageFilter filter)
     {
         return filter.FilterCase switch
         {
@@ -120,7 +122,10 @@ public sealed class ImageProcessorService(
         }));
 
         await responseStream.WriteAsync(
-            new ProcessImageResponse { Result = responseResult },
+            new ProcessImageResponse
+            {
+                Result = responseResult
+            },
             cancellationToken);
 
         for (var offset = 0; offset < result.ImageData.Length; offset += ChunkSize)
