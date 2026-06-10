@@ -9,29 +9,25 @@ public sealed class GrayscaleFilter(GrayscaleFilterOptions options) : IImageFilt
     {
         var width = bitmap.Width;
         var height = bitmap.Height;
-        
+
         var rect = new Rectangle(0, 0, width, height);
         var data = bitmap.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
 
         try
         {
-            var totalPixels = width * height;
-            var chunkSize = totalPixels / Environment.ProcessorCount;
-
             unsafe
             {
-                byte* basePtr = (byte*)data.Scan0;
+                var basePointer = (byte*)data.Scan0;
 
-                Parallel.For(0, Environment.ProcessorCount, worker =>
+                Parallel.For(0, height, y =>
                 {
-                    int start = worker * chunkSize;
-                    int end = (worker == Environment.ProcessorCount - 1) ? totalPixels : start + chunkSize;
+                    var row = basePointer + y * data.Stride;
 
-                    for (int i = start; i < end; i++)
+                    for (var x = 0; x < width; x++)
                     {
-                        byte* pixel = basePtr + (i * 4);
+                        var pixel = row + x * 4;
 
-                        byte gray = (byte)(
+                        var gray = (byte)(
                             (pixel[2] * options.RMul +
                              pixel[1] * options.GMul +
                              pixel[0] * options.BMul)

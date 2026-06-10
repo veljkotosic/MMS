@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using MMS.Core.Filters;
+using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
 
 namespace MMS.WpfApp.ViewModels;
@@ -60,12 +61,14 @@ public sealed class FilterViewModel : INotifyPropertyChanged
         Options = SelectedType switch
         {
             ImageFilterType.Grayscale => new GrayscaleFilterOptions(),
+            ImageFilterType.Gamma => new GammaFilterOptions(),
             _ => new object() 
         };
 
         HasOptions = SelectedType switch
         {
             ImageFilterType.Grayscale => true,
+            ImageFilterType.Gamma => true,
             _ => false
         };
     }

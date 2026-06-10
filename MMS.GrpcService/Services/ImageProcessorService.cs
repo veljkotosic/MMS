@@ -4,6 +4,7 @@ using MMS.Application.Abstract.Dispatcher;
 using MMS.Application.Commands.ProcessImage;
 using MMS.Contracts;
 using MMS.Core.Filters;
+using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
 
 namespace MMS.GrpcService.Services;
@@ -99,6 +100,11 @@ public sealed class ImageProcessorService(
                     RMul = filter.Grayscale.RMul,
                     GMul = filter.Grayscale.GMul,
                     BMul = filter.Grayscale.BMul
+                }),
+            ImageFilter.FilterOneofCase.Gamma =>
+                new Core.Filters.Gamma.GammaFilter(new GammaFilterOptions
+                {
+                    Gamma = filter.Gamma.Gamma
                 }),
             _ => throw new ArgumentException("Filter type is missing or unsupported.")
         };

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option csharp_namespace = "MMS.Contracts";
+
+package image_processor;
+
+message GammaFilter {
+  double Gamma = 1;
+}

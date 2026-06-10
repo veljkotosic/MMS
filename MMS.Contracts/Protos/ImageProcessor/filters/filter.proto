@@ -5,9 +5,11 @@ option csharp_namespace = "MMS.Contracts";
 package image_processor;
 
 import "ImageProcessor/filters/grayscale_filter.proto";
+import "ImageProcessor/filters/gamma_filter.proto";
 
 message ImageFilter {
   oneof Filter {
     GrayscaleFilter Grayscale = 1;
+    GammaFilter Gamma = 2;
   }
 }

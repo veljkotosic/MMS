@@ -13,6 +13,7 @@ using MMS.Core.Filters.Grayscale;
 using MMS.Core.FileFormat;
 using MMS.Core.FileManager;
 using MMS.Core.Filters;
+using MMS.Core.Filters.Gamma;
 using MMS.Core.ImageResource;
 using MMS.WpfApp.Controls;
 using MMS.WpfApp.Services;
@@ -434,6 +435,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     RMul = ((GrayscaleFilterOptions)filterVm.Options).RMul,
                     GMul = ((GrayscaleFilterOptions)filterVm.Options).GMul,
                     BMul = ((GrayscaleFilterOptions)filterVm.Options).BMul
+                }
+            },
+            ImageFilterType.Gamma => new ImageFilter
+            {
+                Gamma = new MMS.Contracts.GammaFilter
+                {
+                    Gamma = ((GammaFilterOptions)filterVm.Options).Gamma
                 }
             },
             _ => throw new InvalidOperationException($"Unsupported filter type: {filterVm.SelectedType}.")
