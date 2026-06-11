@@ -112,6 +112,20 @@ public sealed class ImageProcessorService(
                 {
                     Strength = filter.Sharpen.Strength
                 }),
+            ImageFilter.FilterOneofCase.EdgeDetect =>
+                new Core.Filters.EdgeDetection.EdgeDetectFilter(new Core.Filters.EdgeDetection.EdgeDetectFilterOptions
+                {
+                    Direction = filter.EdgeDetect.Direction switch
+                    {
+                        EdgeDetectDirection.Horizontal =>
+                            Core.Filters.EdgeDetection.EdgeDetectDirection.Horizontal,
+                        EdgeDetectDirection.Vertical =>
+                            Core.Filters.EdgeDetection.EdgeDetectDirection.Vertical,
+                        EdgeDetectDirection.Both =>
+                            Core.Filters.EdgeDetection.EdgeDetectDirection.Both,
+                        _ => throw new ArgumentException("Unsupported edge detection direction.")
+                    }
+                }),
             _ => throw new ArgumentException("Filter type is missing or unsupported.")
         };
     }

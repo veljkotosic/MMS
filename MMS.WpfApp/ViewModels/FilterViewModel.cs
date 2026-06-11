@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using MMS.Core.Filters;
+using MMS.Core.Filters.EdgeDetection;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
 using MMS.Core.Filters.Sharpen;
@@ -64,6 +65,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.Grayscale => new GrayscaleFilterOptions(),
             ImageFilterType.Gamma => new GammaFilterOptions(),
             ImageFilterType.Sharpen => new SharpenFilterOptions(),
+            ImageFilterType.EdgeDetect => new EdgeDetectFilterOptions(),
             _ => new object() 
         };
 
@@ -72,6 +74,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.Grayscale => true,
             ImageFilterType.Gamma => true,
             ImageFilterType.Sharpen => true,
+            ImageFilterType.EdgeDetect => true,
             _ => false
         };
     }

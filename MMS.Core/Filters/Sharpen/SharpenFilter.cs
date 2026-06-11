@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using MMS.Core.Filters.Utility;
 
 namespace MMS.Core.Filters.Sharpen;
 
@@ -40,30 +41,13 @@ public sealed class SharpenFilter : IImageFilter
 
         try
         {
-            var sourcePixels = CopyBitmapBytes(data, width, height);
+            var sourcePixels = FilterUtility.CopyBitmapBytes(data, width, height);
             Sharpen(sourcePixels, data, width, height);
         }
         finally
         {
             bitmap.UnlockBits(data);
         }
-    }
-
-    private static byte[] CopyBitmapBytes(BitmapData bitmapData, int width, int height)
-    {
-        var rowBytes = checked(width * BytesPerPixel);
-        var pixels = new byte[checked(rowBytes * height)];
-
-        for (var y = 0; y < height; y++)
-        {
-            Marshal.Copy(
-                bitmapData.Scan0 + y * bitmapData.Stride,
-                pixels,
-                y * rowBytes,
-                rowBytes);
-        }
-
-        return pixels;
     }
 
     private void Sharpen(
@@ -117,21 +101,6 @@ public sealed class SharpenFilter : IImageFilter
             - rowAbove[channelOffset] * _strength
             - rowBelow[channelOffset] * _strength;
 
-        return ClampToByte((value + Scale / 2) / Scale);
-    }
-
-    private static byte ClampToByte(int value)
-    {
-        if (value < 0)
-        {
-            return 0;
-        }
-
-        if (value > 255)
-        {
-            return 255;
-        }
-
-        return (byte)value;
+        return FilterUtility.ClampToByte((value + Scale / 2) / Scale);
     }
 }

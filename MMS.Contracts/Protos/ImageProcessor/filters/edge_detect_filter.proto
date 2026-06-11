@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option csharp_namespace = "MMS.Contracts";
+
+package image_processor;
+
+message EdgeDetectFilter {
+  EdgeDetectDirection Direction = 1;
+}
+
+enum EdgeDetectDirection {
+  Horizontal = 0;
+  Vertical = 1;
+  Both = 2;
+}

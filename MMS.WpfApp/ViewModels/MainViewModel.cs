@@ -431,7 +431,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             ImageFilterType.Grayscale => new ImageFilter
             {
-                Grayscale = new MMS.Contracts.GrayscaleFilter
+                Grayscale = new Contracts.GrayscaleFilter
                 {
                     RMul = ((GrayscaleFilterOptions)filterVm.Options).RMul,
                     GMul = ((GrayscaleFilterOptions)filterVm.Options).GMul,
@@ -440,16 +440,32 @@ public sealed class MainViewModel : INotifyPropertyChanged
             },
             ImageFilterType.Gamma => new ImageFilter
             {
-                Gamma = new MMS.Contracts.GammaFilter
+                Gamma = new Contracts.GammaFilter
                 {
                     Gamma = ((GammaFilterOptions)filterVm.Options).Gamma
                 }
             },
             ImageFilterType.Sharpen => new ImageFilter
             {
-                Sharpen = new MMS.Contracts.SharpenFilter
+                Sharpen = new Contracts.SharpenFilter
                 {
                     Strength = ((SharpenFilterOptions)filterVm.Options).Strength
+                }
+            },
+            ImageFilterType.EdgeDetect => new ImageFilter
+            {
+                EdgeDetect = new EdgeDetectFilter
+                {
+                    Direction = ((Core.Filters.EdgeDetection.EdgeDetectFilterOptions)filterVm.Options).Direction switch
+                    {
+                        Core.Filters.EdgeDetection.EdgeDetectDirection.Horizontal =>
+                            EdgeDetectDirection.Horizontal,
+                        Core.Filters.EdgeDetection.EdgeDetectDirection.Vertical =>
+                            EdgeDetectDirection.Vertical,
+                        Core.Filters.EdgeDetection.EdgeDetectDirection.Both =>
+                            EdgeDetectDirection.Both,
+                        _ => throw new InvalidOperationException("Unsupported edge detection direction.")
+                    }
                 }
             },
             _ => throw new InvalidOperationException($"Unsupported filter type: {filterVm.SelectedType}.")
