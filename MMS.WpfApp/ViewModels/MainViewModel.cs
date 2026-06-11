@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 using MMS.Contracts;
 using MMS.Core.Filters.Grayscale;
+using MMS.Core.Filters.BillAtkinson;
 using MMS.Core.FileFormat;
 using MMS.Core.FileManager;
 using MMS.Core.Filters;
@@ -171,12 +172,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             var fileManager = new MmsFileManager();
             fileManager.SaveImage(filePath, mmsFile);
+            AddLog($"Saved MMS file: {Path.GetFileName(filePath)}");
         }
         else
         {
             var fileManager = new StandardFileManager();
             var resource = new StandardImageResource(currentBitmap);
             fileManager.SaveImage(filePath, resource);
+            AddLog($"Saved image file: {Path.GetFileName(filePath)}");
         }
     }
 
@@ -485,6 +488,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Pixelate = new Contracts.PixelateFilter
                 {
                     BlockSize = ((PixelateFilterOptions)filterVm.Options).BlockSize
+                }
+            },
+            ImageFilterType.BillAtkinson => new ImageFilter
+            {
+                BillAtkinson = new Contracts.BillAtkinsonFilter
+                {
+                    Threshold = ((BillAtkinsonFilterOptions)filterVm.Options).Threshold
                 }
             },
             _ => throw new InvalidOperationException($"Unsupported filter type: {filterVm.SelectedType}.")

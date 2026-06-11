@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using MMS.Core.Filters;
+using MMS.Core.Filters.BillAtkinson;
 using MMS.Core.Filters.EdgeDetection;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
@@ -70,6 +71,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.EdgeDetect => new EdgeDetectFilterOptions(),
             ImageFilterType.TimeWarp => new TimeWarpFilterOptions(),
             ImageFilterType.Pixelate => new PixelateFilterOptions(),
+            ImageFilterType.BillAtkinson => new BillAtkinsonFilterOptions(),
             _ => new object() 
         };
 
@@ -81,6 +83,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.EdgeDetect => true,
             ImageFilterType.TimeWarp => true,
             ImageFilterType.Pixelate => true,
+            ImageFilterType.BillAtkinson => true,
             _ => false
         };
     }

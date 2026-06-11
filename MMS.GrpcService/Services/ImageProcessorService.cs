@@ -4,6 +4,7 @@ using MMS.Application.Abstract.Dispatcher;
 using MMS.Application.Commands.ProcessImage;
 using MMS.Contracts;
 using MMS.Core.Filters;
+using MMS.Core.Filters.BillAtkinson;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
 using MMS.Core.Filters.Pixelate;
@@ -141,7 +142,12 @@ public sealed class ImageProcessorService(
                 {
                     BlockSize = filter.Pixelate.BlockSize
                 }),
-            _ => throw new ArgumentException("Filter type is missing or unsupported.")
+            ImageFilter.FilterOneofCase.BillAtkinson =>
+                new Core.Filters.BillAtkinson.BillAtkinsonFilter(new BillAtkinsonFilterOptions
+                {
+                    Threshold = filter.BillAtkinson.Threshold
+                }),
+            _ => throw new ArgumentException("Filter type unsupported.")
         };
     }
 
