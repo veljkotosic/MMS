@@ -11,6 +11,7 @@ using Microsoft.Win32;
 using MMS.Contracts;
 using MMS.Core.Filters.Grayscale;
 using MMS.Core.Filters.BillAtkinson;
+using MMS.Core.Filters.Halftone;
 using MMS.Core.FileFormat;
 using MMS.Core.FileManager;
 using MMS.Core.Filters;
@@ -495,6 +496,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 BillAtkinson = new Contracts.BillAtkinsonFilter
                 {
                     Threshold = ((BillAtkinsonFilterOptions)filterVm.Options).Threshold
+                }
+            },
+            ImageFilterType.Halftone => new ImageFilter
+            {
+                Halftone = new Contracts.HalftoneFilter
+                {
+                    CellSize = ((HalftoneFilterOptions)filterVm.Options).CellSize
                 }
             },
             _ => throw new InvalidOperationException($"Unsupported filter type: {filterVm.SelectedType}.")

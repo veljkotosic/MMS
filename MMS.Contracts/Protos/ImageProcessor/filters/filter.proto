@@ -11,6 +11,7 @@ import "ImageProcessor/filters/edge_detect_filter.proto";
 import "ImageProcessor/filters/time_warp_filter.proto";
 import "ImageProcessor/filters/pixelate_filter.proto";
 import "ImageProcessor/filters/bill_atkinson_filter.proto";
+import "ImageProcessor/filters/halftone_filter.proto";
 
 message ImageFilter {
   oneof Filter {
@@ -21,5 +22,6 @@ message ImageFilter {
     TimeWarpFilter TimeWarp = 6;
     PixelateFilter Pixelate = 7;
     BillAtkinsonFilter BillAtkinson = 8;
+    HalftoneFilter Halftone = 9;
   }
 }

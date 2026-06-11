@@ -5,6 +5,7 @@ using MMS.Application.Commands.ProcessImage;
 using MMS.Contracts;
 using MMS.Core.Filters;
 using MMS.Core.Filters.BillAtkinson;
+using MMS.Core.Filters.Halftone;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
 using MMS.Core.Filters.Pixelate;
@@ -146,6 +147,11 @@ public sealed class ImageProcessorService(
                 new Core.Filters.BillAtkinson.BillAtkinsonFilter(new BillAtkinsonFilterOptions
                 {
                     Threshold = filter.BillAtkinson.Threshold
+                }),
+            ImageFilter.FilterOneofCase.Halftone =>
+                new Core.Filters.Halftone.HalftoneFilter(new HalftoneFilterOptions
+                {
+                    CellSize = filter.Halftone.CellSize
                 }),
             _ => throw new ArgumentException("Filter type unsupported.")
         };

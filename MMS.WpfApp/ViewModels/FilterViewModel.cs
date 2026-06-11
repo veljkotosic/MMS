@@ -5,6 +5,7 @@ using MMS.Core.Filters.BillAtkinson;
 using MMS.Core.Filters.EdgeDetection;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
+using MMS.Core.Filters.Halftone;
 using MMS.Core.Filters.Pixelate;
 using MMS.Core.Filters.Sharpen;
 using MMS.Core.Filters.TimeWarp;
@@ -72,6 +73,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.TimeWarp => new TimeWarpFilterOptions(),
             ImageFilterType.Pixelate => new PixelateFilterOptions(),
             ImageFilterType.BillAtkinson => new BillAtkinsonFilterOptions(),
+            ImageFilterType.Halftone => new HalftoneFilterOptions(),
             _ => new object() 
         };
 
@@ -84,6 +86,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.TimeWarp => true,
             ImageFilterType.Pixelate => true,
             ImageFilterType.BillAtkinson => true,
+            ImageFilterType.Halftone => true,
             _ => false
         };
     }
