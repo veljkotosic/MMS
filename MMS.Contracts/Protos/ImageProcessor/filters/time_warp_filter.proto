@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option csharp_namespace = "MMS.Contracts";
+
+package image_processor;
+
+message TimeWarpFilter {
+  double Strength = 1;
+  double U = 2;
+  double V = 3;
+  double Radius = 4;
+}

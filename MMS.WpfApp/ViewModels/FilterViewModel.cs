@@ -5,6 +5,7 @@ using MMS.Core.Filters.EdgeDetection;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
 using MMS.Core.Filters.Sharpen;
+using MMS.Core.Filters.TimeWarp;
 
 namespace MMS.WpfApp.ViewModels;
 
@@ -66,6 +67,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.Gamma => new GammaFilterOptions(),
             ImageFilterType.Sharpen => new SharpenFilterOptions(),
             ImageFilterType.EdgeDetect => new EdgeDetectFilterOptions(),
+            ImageFilterType.TimeWarp => new TimeWarpFilterOptions(),
             _ => new object() 
         };
 
@@ -75,6 +77,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.Gamma => true,
             ImageFilterType.Sharpen => true,
             ImageFilterType.EdgeDetect => true,
+            ImageFilterType.TimeWarp => true,
             _ => false
         };
     }

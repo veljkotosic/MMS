@@ -16,6 +16,7 @@ using MMS.Core.Filters;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.ImageResource;
 using MMS.Core.Filters.Sharpen;
+using MMS.Core.Filters.TimeWarp;
 using MMS.WpfApp.Controls;
 using MMS.WpfApp.Services;
 
@@ -466,6 +467,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
                             EdgeDetectDirection.Both,
                         _ => throw new InvalidOperationException("Unsupported edge detection direction.")
                     }
+                }
+            },
+            ImageFilterType.TimeWarp => new ImageFilter
+            {
+                TimeWarp = new Contracts.TimeWarpFilter
+                {
+                    Strength = ((TimeWarpFilterOptions)filterVm.Options).Strength,
+                    U = ((TimeWarpFilterOptions)filterVm.Options).U,
+                    V = ((TimeWarpFilterOptions)filterVm.Options).V,
+                    Radius = ((TimeWarpFilterOptions)filterVm.Options).Radius
                 }
             },
             _ => throw new InvalidOperationException($"Unsupported filter type: {filterVm.SelectedType}.")

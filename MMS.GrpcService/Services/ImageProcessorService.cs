@@ -7,6 +7,7 @@ using MMS.Core.Filters;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
 using MMS.Core.Filters.Sharpen;
+using MMS.Core.Filters.TimeWarp;
 
 namespace MMS.GrpcService.Services;
 
@@ -125,6 +126,14 @@ public sealed class ImageProcessorService(
                             Core.Filters.EdgeDetection.EdgeDetectDirection.Both,
                         _ => throw new ArgumentException("Unsupported edge detection direction.")
                     }
+                }),
+            ImageFilter.FilterOneofCase.TimeWarp =>
+                new Core.Filters.TimeWarp.TimeWarpFilter(new TimeWarpFilterOptions
+                {
+                    Strength = filter.TimeWarp.Strength,
+                    U = filter.TimeWarp.U,
+                    V = filter.TimeWarp.V,
+                    Radius = filter.TimeWarp.Radius
                 }),
             _ => throw new ArgumentException("Filter type is missing or unsupported.")
         };

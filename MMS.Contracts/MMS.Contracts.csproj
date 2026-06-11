@@ -23,6 +23,7 @@
         <Protobuf Include="Protos\ImageProcessor\filters\gamma_filter.proto" ProtoRoot="Protos" GrpcServices="None" Access="Public" />
         <Protobuf Include="Protos\ImageProcessor\filters\sharpen_filter.proto" ProtoRoot="Protos" GrpcServices="None" Access="Public" />
         <Protobuf Include="Protos\ImageProcessor\filters\edge_detect_filter.proto" ProtoRoot="Protos" GrpcServices="None" Access="Public" />
+        <Protobuf Include="Protos\ImageProcessor\filters\time_warp_filter.proto" ProtoRoot="Protos" GrpcServices="None" Access="Public" />
     </ItemGroup>
 
 </Project>
