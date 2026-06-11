@@ -6,6 +6,7 @@ using MMS.Contracts;
 using MMS.Core.Filters;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
+using MMS.Core.Filters.Pixelate;
 using MMS.Core.Filters.Sharpen;
 using MMS.Core.Filters.TimeWarp;
 
@@ -134,6 +135,11 @@ public sealed class ImageProcessorService(
                     U = filter.TimeWarp.U,
                     V = filter.TimeWarp.V,
                     Radius = filter.TimeWarp.Radius
+                }),
+            ImageFilter.FilterOneofCase.Pixelate =>
+                new Core.Filters.Pixelate.PixelateFilter(new PixelateFilterOptions
+                {
+                    BlockSize = filter.Pixelate.BlockSize
                 }),
             _ => throw new ArgumentException("Filter type is missing or unsupported.")
         };

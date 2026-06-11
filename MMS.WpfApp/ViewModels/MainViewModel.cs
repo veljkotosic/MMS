@@ -14,6 +14,7 @@ using MMS.Core.FileFormat;
 using MMS.Core.FileManager;
 using MMS.Core.Filters;
 using MMS.Core.Filters.Gamma;
+using MMS.Core.Filters.Pixelate;
 using MMS.Core.ImageResource;
 using MMS.Core.Filters.Sharpen;
 using MMS.Core.Filters.TimeWarp;
@@ -477,6 +478,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     U = ((TimeWarpFilterOptions)filterVm.Options).U,
                     V = ((TimeWarpFilterOptions)filterVm.Options).V,
                     Radius = ((TimeWarpFilterOptions)filterVm.Options).Radius
+                }
+            },
+            ImageFilterType.Pixelate => new ImageFilter
+            {
+                Pixelate = new Contracts.PixelateFilter
+                {
+                    BlockSize = ((PixelateFilterOptions)filterVm.Options).BlockSize
                 }
             },
             _ => throw new InvalidOperationException($"Unsupported filter type: {filterVm.SelectedType}.")

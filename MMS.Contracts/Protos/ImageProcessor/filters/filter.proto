@@ -9,6 +9,7 @@ import "ImageProcessor/filters/gamma_filter.proto";
 import "ImageProcessor/filters/sharpen_filter.proto";
 import "ImageProcessor/filters/edge_detect_filter.proto";
 import "ImageProcessor/filters/time_warp_filter.proto";
+import "ImageProcessor/filters/pixelate_filter.proto";
 
 message ImageFilter {
   oneof Filter {
@@ -17,5 +18,6 @@ message ImageFilter {
     SharpenFilter Sharpen = 3;
     EdgeDetectFilter EdgeDetect = 4;
     TimeWarpFilter TimeWarp = 6;
+    PixelateFilter Pixelate = 7;
   }
 }

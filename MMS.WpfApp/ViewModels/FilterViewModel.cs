@@ -4,6 +4,7 @@ using MMS.Core.Filters;
 using MMS.Core.Filters.EdgeDetection;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
+using MMS.Core.Filters.Pixelate;
 using MMS.Core.Filters.Sharpen;
 using MMS.Core.Filters.TimeWarp;
 
@@ -68,6 +69,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.Sharpen => new SharpenFilterOptions(),
             ImageFilterType.EdgeDetect => new EdgeDetectFilterOptions(),
             ImageFilterType.TimeWarp => new TimeWarpFilterOptions(),
+            ImageFilterType.Pixelate => new PixelateFilterOptions(),
             _ => new object() 
         };
 
@@ -78,6 +80,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.Sharpen => true,
             ImageFilterType.EdgeDetect => true,
             ImageFilterType.TimeWarp => true,
+            ImageFilterType.Pixelate => true,
             _ => false
         };
     }
