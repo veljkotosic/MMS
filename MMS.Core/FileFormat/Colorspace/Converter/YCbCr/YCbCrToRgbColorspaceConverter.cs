@@ -5,6 +5,11 @@ public class YCbCrToRgbColorspaceConverter
 {
     public byte[] Convert(byte[] pixels, int width, int height, int channels)
     {
+        if (channels != 3 || pixels.Length != checked(width * height * channels))
+        {
+            throw new ArgumentException("Invalid channel count.");
+        }
+
         var result = new byte[pixels.Length];
         for (int i = 0; i < pixels.Length; i += channels)
         {
@@ -20,10 +25,6 @@ public class YCbCrToRgbColorspaceConverter
             result[i + 1] = (byte)Math.Clamp(g, 0, 255);
             result[i + 2] = (byte)Math.Clamp(b, 0, 255);
 
-            if (channels == 4)
-            {
-                result[i + 3] = pixels[i + 3];
-            }
         }
 
         return result;

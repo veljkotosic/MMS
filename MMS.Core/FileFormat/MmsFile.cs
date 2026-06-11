@@ -18,30 +18,39 @@ public sealed class MmsFile
 
     public Bitmap GetBitmap()
     {
+        MmsFormatValidation.ValidateHeader(Header);
+
+        var width = checked((int)Header.Width);
+        var height = checked((int)Header.Height);
+        
         var compression = MmsCompressionFactory.GetCompression(Header.Compression);
-        var decompressedPixels = compression.Decompress(Pixels, Metadata, (int)Header.Width, (int)Header.Height, Header.Channels);
+        var decompressedPixels = compression.Decompress(Pixels, Metadata, width, height, Header.Channels);
+        
+        var expectedLength = checked(width * height * Header.Channels);
 
-        var colorspaceConverter = MmsColorspaceConverterFactory.GetConverter(Header.Colorspace, MmsColorspace.Rgb);
-        var convertedPixels = colorspaceConverter.Convert(decompressedPixels, (int)Header.Width, (int)Header.Height, Header.Channels);
-
-        for (int i = 0; i < convertedPixels.Length; i += Header.Channels)
+        if (decompressedPixels.Length != expectedLength)
         {
-            (convertedPixels[i], convertedPixels[i + 2]) = (convertedPixels[i + 2], convertedPixels[i]);
+            throw new InvalidDataException("Invalid data length");
         }
 
-        var pixelFormat = Header.Channels == 4 ? PixelFormat.Format32bppArgb : PixelFormat.Format24bppRgb;
-        var bitmap = new Bitmap((int)Header.Width, (int)Header.Height, pixelFormat);
+        var colorspaceConverter = MmsColorspaceConverterFactory.GetConverter(Header.Colorspace, MmsColorspace.Rgb);
+        var rgbPixels = colorspaceConverter.Convert(decompressedPixels, width, height, Header.Channels);
+        var bgraPixels = RgbToBgra(rgbPixels, width, height);
+
+        var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
         var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.WriteOnly, bitmap.PixelFormat);
 
         try
         {
-            for (int y = 0; y < Header.Height; y++)
+            var rowLength = checked(width * 4);
+
+            for (var y = 0; y < height; y++)
             {
                 Marshal.Copy(
-                    convertedPixels,
-                    y * (int)Header.Width * Header.Channels,
+                    bgraPixels,
+                    y * rowLength,
                     bitmapData.Scan0 + y * bitmapData.Stride,
-                    (int)Header.Width * Header.Channels);
+                    rowLength);
             }
         }
         finally
@@ -54,6 +63,10 @@ public sealed class MmsFile
 
     public void SetBitmap(Bitmap bitmap)
     {
+        ArgumentNullException.ThrowIfNull(bitmap);
+
+        var channels = MmsFormatValidation.GetChannelCount(Header.Colorspace);
+
         Header = Header with
         {
             Magic = MmsHeader.MagicValue,
@@ -61,41 +74,53 @@ public sealed class MmsFile
             HeaderLength = (ushort)Marshal.SizeOf<MmsHeader>(),
             Width = (uint)bitmap.Width,
             Height = (uint)bitmap.Height,
-            Channels = (byte)(bitmap.PixelFormat == PixelFormat.Format32bppArgb ? 4 : 3)
+            Channels = channels
         };
 
-        var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-        var pixelFormat = Header.Channels == 4 ? PixelFormat.Format32bppArgb : PixelFormat.Format24bppRgb;
-        var bmpData = bitmap.LockBits(rect, ImageLockMode.ReadOnly, pixelFormat);
+        MmsFormatValidation.ValidateHeader(Header);
 
-        var rawBytes = new byte[Header.Width * Header.Height * Header.Channels];
+        var width = bitmap.Width;
+        var height = bitmap.Height;
+        var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+        
+        using var normalizedBitmap = bitmap.Clone(rect, PixelFormat.Format32bppArgb);
+        var normalizedBitmapData = normalizedBitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
+        var rgbPixels = new byte[checked(width * height * 3)];
         
         try
         {
-            for (int y = 0; y < Header.Height; y++)
+            unsafe
             {
-                Marshal.Copy(
-                    bmpData.Scan0 + y * bmpData.Stride,
-                    rawBytes,
-                    y * (int)Header.Width * Header.Channels,
-                    (int)Header.Width * Header.Channels);
+                var sourceBase = (byte*)normalizedBitmapData.Scan0;
+
+                Parallel.For(0, height, y =>
+                {
+                    var sourceRow = sourceBase + y * normalizedBitmapData.Stride;
+                    var destinationOffset = y * width * 3;
+
+                    for (var x = 0; x < width; x++)
+                    {
+                        var sourceOffset = x * 4;
+                        var rgbOffset = destinationOffset + x * 3;
+
+                        rgbPixels[rgbOffset] = sourceRow[sourceOffset + 2];
+                        rgbPixels[rgbOffset + 1] = sourceRow[sourceOffset + 1];
+                        rgbPixels[rgbOffset + 2] = sourceRow[sourceOffset];
+                    }
+                });
             }
         }
         finally
         {
-            bitmap.UnlockBits(bmpData);
-        }
-
-        for (int i = 0; i < rawBytes.Length; i += Header.Channels)
-        {
-            (rawBytes[i], rawBytes[i + 2]) = (rawBytes[i + 2], rawBytes[i]);
+            normalizedBitmap.UnlockBits(normalizedBitmapData);
         }
 
         var colorspaceConverter = MmsColorspaceConverterFactory.GetConverter(MmsColorspace.Rgb, Header.Colorspace);
-        var convertedPixels = colorspaceConverter.Convert(rawBytes, (int)Header.Width, (int)Header.Height, Header.Channels);
+        var convertedPixels = colorspaceConverter.Convert(rgbPixels, width, height, 3);
 
         var compression = MmsCompressionFactory.GetCompression(Header.Compression);
-        var (compressedPixels, metadata) = compression.Compress(convertedPixels, (int)Header.Width, (int)Header.Height, Header.Channels);
+        var (compressedPixels, metadata) = compression.Compress(convertedPixels, width, height, Header.Channels);
         
         Pixels = compressedPixels;
         Metadata = metadata;
@@ -105,5 +130,30 @@ public sealed class MmsFile
             PixelsLength = (uint)Pixels.Length,
             MetadataLength = (uint)Metadata.Length
         };
+    }
+
+    private static byte[] RgbToBgra(byte[] rgbPixels, int width, int height)
+    {
+        var pixelCount = checked(width * height);
+
+        if (rgbPixels.Length != checked(pixelCount * 3))
+        {
+            throw new InvalidDataException("Conversion failed.");
+        }
+
+        var bgraPixels = new byte[checked(pixelCount * 4)];
+
+        Parallel.For(0, pixelCount, pixel =>
+        {
+            var rgbOffset = pixel * 3;
+            var bgraOffset = pixel * 4;
+
+            bgraPixels[bgraOffset] = rgbPixels[rgbOffset + 2];
+            bgraPixels[bgraOffset + 1] = rgbPixels[rgbOffset + 1];
+            bgraPixels[bgraOffset + 2] = rgbPixels[rgbOffset];
+            bgraPixels[bgraOffset + 3] = 255;
+        });
+
+        return bgraPixels;
     }
 }

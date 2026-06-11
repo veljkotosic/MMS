@@ -5,22 +5,19 @@ public class LinearToRgbColorspaceConverter
 {
     public byte[] Convert(byte[] pixels, int width, int height, int channels)
     {
-        var result = new byte[pixels.Length];
-        
-        for (int i = 0; i < pixels.Length; i++)
+        if (channels != 1 || pixels.Length != checked(width * height))
         {
-            if (channels == 4 && (i + 1) % 4 == 0)
-            {
-                result[i] = pixels[i];
-                continue;
-            }
+            throw new ArgumentException("Invalid channel count.");
+        }
 
-            var value = pixels[i] / 255.0;
-            var rgbValue = value <= 0.0031308
-                ? value * 12.92
-                : 1.055 * Math.Pow(value, 1.0 / 2.4) - 0.055;
+        var result = new byte[checked(width * height * 3)];
 
-            result[i] = (byte)Math.Clamp(Math.Round(rgbValue * 255.0), 0, 255);
+        for (var pixel = 0; pixel < pixels.Length; pixel++)
+        {
+            var offset = pixel * 3;
+            result[offset] = pixels[pixel];
+            result[offset + 1] = pixels[pixel];
+            result[offset + 2] = pixels[pixel];
         }
 
         return result;

@@ -17,6 +17,6 @@ public class ChainedColorspaceConverter
     public byte[] Convert(byte[] pixels, int width, int height, int channels)
     {
         var rgbPixels = _toRgbConverter.Convert(pixels, width, height, channels);
-        return _fromRgbConverter.Convert(rgbPixels, width, height, channels);
+        return _fromRgbConverter.Convert(rgbPixels, width, height, 3);
     }
 }

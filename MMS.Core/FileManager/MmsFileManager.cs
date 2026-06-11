@@ -36,7 +36,9 @@ public class MmsFileManager :
         if (header.HeaderLength != headerSize)
         {
             throw new InvalidDataException("Invalid header size.");
-        }        
+        }
+
+        MmsFormatValidation.ValidateHeader(header);
         
         byte[] meta = [];
         
@@ -70,6 +72,13 @@ public class MmsFileManager :
 
     public void SaveImage(string path, MmsFile data)
     {
+        MmsFormatValidation.ValidateHeader(data.Header);
+
+        if (data.Header.MetadataLength != data.Metadata.Length || data.Header.PixelsLength != data.Pixels.Length)
+        {
+            throw new InvalidDataException("Invalid data.");
+        }
+
         using var stream = File.Create(path);
         using var writer = new BinaryWriter(stream);
         var crc32 = new Crc32();       
