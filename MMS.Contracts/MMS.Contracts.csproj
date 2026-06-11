@@ -21,6 +21,7 @@
         <Protobuf Include="Protos\ImageProcessor\filters\filter.proto" ProtoRoot="Protos" GrpcServices="None" Access="Public" />
         <Protobuf Include="Protos\ImageProcessor\filters\grayscale_filter.proto" ProtoRoot="Protos" GrpcServices="None" Access="Public" />
         <Protobuf Include="Protos\ImageProcessor\filters\gamma_filter.proto" ProtoRoot="Protos" GrpcServices="None" Access="Public" />
+        <Protobuf Include="Protos\ImageProcessor\filters\sharpen_filter.proto" ProtoRoot="Protos" GrpcServices="None" Access="Public" />
     </ItemGroup>
 
 </Project>

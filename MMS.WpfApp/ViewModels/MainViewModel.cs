@@ -15,6 +15,7 @@ using MMS.Core.FileManager;
 using MMS.Core.Filters;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.ImageResource;
+using MMS.Core.Filters.Sharpen;
 using MMS.WpfApp.Controls;
 using MMS.WpfApp.Services;
 
@@ -442,6 +443,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Gamma = new MMS.Contracts.GammaFilter
                 {
                     Gamma = ((GammaFilterOptions)filterVm.Options).Gamma
+                }
+            },
+            ImageFilterType.Sharpen => new ImageFilter
+            {
+                Sharpen = new MMS.Contracts.SharpenFilter
+                {
+                    Strength = ((SharpenFilterOptions)filterVm.Options).Strength
                 }
             },
             _ => throw new InvalidOperationException($"Unsupported filter type: {filterVm.SelectedType}.")

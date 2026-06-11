@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using MMS.Core.Filters;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
+using MMS.Core.Filters.Sharpen;
 
 namespace MMS.WpfApp.ViewModels;
 
@@ -62,6 +63,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
         {
             ImageFilterType.Grayscale => new GrayscaleFilterOptions(),
             ImageFilterType.Gamma => new GammaFilterOptions(),
+            ImageFilterType.Sharpen => new SharpenFilterOptions(),
             _ => new object() 
         };
 
@@ -69,6 +71,7 @@ public sealed class FilterViewModel : INotifyPropertyChanged
         {
             ImageFilterType.Grayscale => true,
             ImageFilterType.Gamma => true,
+            ImageFilterType.Sharpen => true,
             _ => false
         };
     }

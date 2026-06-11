@@ -6,6 +6,7 @@ using MMS.Contracts;
 using MMS.Core.Filters;
 using MMS.Core.Filters.Gamma;
 using MMS.Core.Filters.Grayscale;
+using MMS.Core.Filters.Sharpen;
 
 namespace MMS.GrpcService.Services;
 
@@ -105,6 +106,11 @@ public sealed class ImageProcessorService(
                 new Core.Filters.Gamma.GammaFilter(new GammaFilterOptions
                 {
                     Gamma = filter.Gamma.Gamma
+                }),
+            ImageFilter.FilterOneofCase.Sharpen =>
+                new Core.Filters.Sharpen.SharpenFilter(new SharpenFilterOptions
+                {
+                    Strength = filter.Sharpen.Strength
                 }),
             _ => throw new ArgumentException("Filter type is missing or unsupported.")
         };
