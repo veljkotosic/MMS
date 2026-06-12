@@ -1,9 +1,10 @@
 <Solution>
   <Project Path="MMS.Application/MMS.Application.csproj" />
+  <Project Path="MMS.Benchmarks/MMS.Benchmarks.csproj" />
   <Project Path="MMS.Contracts/MMS.Contracts.csproj" />
   <Project Path="MMS.Core/MMS.Core.csproj" />
   <Project Path="MMS.GrpcService/MMS.GrpcService.csproj" />
   <Project Path="MMS.Infrastructure/MMS.Infrastructure.csproj" />
-  <Project Path="MMS.Test/MMS.Test.csproj" />
+  <Project Path="MMS.Tests/MMS.Tests.csproj" />
   <Project Path="MMS.WpfApp/MMS.WpfApp.csproj" />
 </Solution>
