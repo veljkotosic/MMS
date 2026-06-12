@@ -22,6 +22,14 @@
 
     <ItemGroup>
         <ProjectReference Include="..\MMS.Core\MMS.Core.csproj" />
+        <ProjectReference Include="..\MMS.Contracts\MMS.Contracts.csproj" />
+        <ProjectReference Include="..\MMS.GrpcService\MMS.GrpcService.csproj" />
+        <ProjectReference Include="..\MMS.Infrastructure\MMS.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.Net.Client" Version="2.64.0" />
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 
 </Project>

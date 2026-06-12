@@ -10,6 +10,6 @@ public sealed class PixelateFilterOptions : IFilterOptions
 
     public string? Validate() 
     {
-        return BlockSize < 1 ? "Pixelate block size must be at least 1." : null;
+        return BlockSize < 1 ? "Invalid block size." : null;
     }
 }
