@@ -260,7 +260,7 @@
                                            Foreground="#666666"
                                            FontFamily="Consolas" />
                                 <TextBlock Grid.Column="1"
-                                           Text="{Binding Message}"
+                                           Text="{Binding DisplayMessage}"
                                            TextWrapping="Wrap"
                                            Foreground="#333333" />
                             </Grid>

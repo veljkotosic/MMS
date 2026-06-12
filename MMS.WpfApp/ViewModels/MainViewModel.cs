@@ -252,7 +252,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             }
             catch (Exception ex)
             {
-                AddLog($"Filter processing failed: {ex.Message}");
+                AddLog($"Filter processing failed: {ex.Message}", ClientLogLevel.Error);
                 MessageBox.Show(
                     ex is RpcException { StatusCode: StatusCode.InvalidArgument }
                         ? "The staged filters or image are invalid. Review the filter messages and try again."
@@ -268,7 +268,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception e)
         {
-            AddLog($"Failed to prepare filters: {e.Message}");
+            AddLog($"Failed to prepare filters: {e.Message}", ClientLogLevel.Error);
             MessageBox.Show(
                 "The filters could not be prepared. Review the staged filter options.",
                 "Filter Error",
@@ -557,14 +557,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private void AddLog(string message)
+    private void AddLog(string message, ClientLogLevel level = ClientLogLevel.Info)
     {
-        ClientLogs.Add(new ClientLogEntry(DateTime.Now, message));
+        ClientLogs.Add(new ClientLogEntry(DateTime.Now, level, message));
     }
 
     private void ShowOperationError(string title, string userMessage, Exception exception)
     {
-        AddLog($"{title}: {exception.Message}");
+        AddLog($"{title}: {exception.Message}", ClientLogLevel.Error);
         MessageBox.Show(userMessage, title, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
@@ -607,7 +607,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
-public sealed record ClientLogEntry(DateTime Timestamp, string Message);
+public enum ClientLogLevel
+{
+    Info,
+    Error
+}
+
+public sealed record ClientLogEntry(DateTime Timestamp, ClientLogLevel Level, string Message)
+{
+    public string DisplayMessage => $"[{Level}] {Message}";
+}
 
 public class MmsCommand(Action<object?> execute, Predicate<object?>? canExecute = null) : ICommand
 {
