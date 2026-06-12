@@ -1,5 +1,6 @@
 using MMS.GrpcService.Services;
 using MMS.Infrastructure.DependencyInjection;
+using MMS.Core.Utility;
 
 namespace MMS.GrpcService;
 
@@ -11,7 +12,11 @@ public class Program
 
         builder.Services.AddMms();
         
-        builder.Services.AddGrpc();
+        builder.Services.AddGrpc(options =>
+        {
+            options.MaxReceiveMessageSize = checked((int)ApplicationLimits.MaxDecodedImageBytes);
+            options.MaxSendMessageSize = checked((int)ApplicationLimits.MaxDecodedImageBytes);
+        });
 
         var app = builder.Build();
 

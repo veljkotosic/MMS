@@ -75,11 +75,16 @@
                                     </Expander.Style>
                                     <syncfusion:PropertyGrid 
                                         SelectedObject="{Binding Options}"
+                                         LostKeyboardFocus="PropertyGrid_LostKeyboardFocus"
                                          DescriptionPanelVisibility="Collapsed"
                                          SearchBoxVisibility="Collapsed"
                                          ButtonPanelVisibility="Collapsed"
                                          SortDirection="Ascending"/>
                                 </Expander>
+                                <TextBlock Text="{Binding ValidationMessage}"
+                                           Foreground="Firebrick"
+                                           TextWrapping="Wrap"
+                                           Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>
                     </DataTemplate>

@@ -56,6 +56,10 @@ public sealed class FilterViewModel : INotifyPropertyChanged
         }
     }
 
+    public string? ValidationMessage => SelectedType == ImageFilterType.Unknown ? "Select a filter type." : (Options as IFilterOptions)?.Validate();
+
+    public bool IsValid => ValidationMessage == null;
+
     public FilterViewModel(ImageFilterType type = ImageFilterType.Unknown)
     {
         SelectedType = type;
@@ -89,6 +93,14 @@ public sealed class FilterViewModel : INotifyPropertyChanged
             ImageFilterType.Halftone => true,
             _ => false
         };
+
+        RefreshValidation();
+    }
+
+    public void RefreshValidation()
+    {
+        OnPropertyChanged(nameof(ValidationMessage));
+        OnPropertyChanged(nameof(IsValid));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

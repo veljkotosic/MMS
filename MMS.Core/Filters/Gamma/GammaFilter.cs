@@ -10,11 +10,7 @@ public sealed class GammaFilter : IImageFilter
     public GammaFilter(GammaFilterOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-
-        if (options.Gamma <= 0 || double.IsNaN(options.Gamma) || double.IsInfinity(options.Gamma))
-        {
-            throw new ArgumentOutOfRangeException(nameof(options.Gamma), "Invalid gamma value.");
-        }
+        ((IFilterOptions)options).ValidateAndThrow();
 
         _lookupTable = CreateLookupTable(options.Gamma);
     }

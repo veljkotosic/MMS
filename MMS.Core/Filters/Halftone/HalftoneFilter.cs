@@ -11,11 +11,7 @@ public sealed class HalftoneFilter : IImageFilter
     public HalftoneFilter(HalftoneFilterOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-
-        if (options.CellSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(options.CellSize), "Invalid cell size.");
-        }
+        ((IFilterOptions)options).ValidateAndThrow();
 
         _cellSize = options.CellSize;
     }

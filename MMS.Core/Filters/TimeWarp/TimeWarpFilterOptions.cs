@@ -2,33 +2,36 @@ using System.ComponentModel;
 
 namespace MMS.Core.Filters.TimeWarp;
 
-public sealed class TimeWarpFilterOptions
+public sealed class TimeWarpFilterOptions : IFilterOptions
 {
-    [Category("Distortion")]
+    [Category("TimeWarp")]
     [DisplayName("Strength")]
     public double Strength { get; set; } = 1.0;
 
-    [Category("Distortion")]
+    [Category("TimeWarp")]
     [DisplayName("Radius")]
-    public double Radius
-    {
-        get;
-        set => field = Math.Clamp(value, 0.0, 1.0);
-    } = 0.5;
+    public double Radius { get; set; } = 0.5;
 
-    [Category("Center")]
+    [Category("TimeWarp")]
     [DisplayName("U")]
-    public double U
-    {
-        get;
-        set => field = Math.Clamp(value, 0.0, 1.0);
-    } = 0.5;
+    public double U { get; set; } = 0.5;
 
-    [Category("Center")]
+    [Category("TimeWarp")]
     [DisplayName("V")]
-    public double V
+    public double V { get; set; } = 0.5;
+
+    public string? Validate()
     {
-        get;
-        set => field = Math.Clamp(value, 0.0, 1.0);
-    } = 0.5;
+        if (!double.IsFinite(Strength))
+        {
+            return "Invalid strength.";
+        }
+
+        return IsNormalized(U) && IsNormalized(V) && IsNormalized(Radius) ? null : "Invalid parameters.";
+    }
+
+    private static bool IsNormalized(double value)
+    {
+        return double.IsFinite(value) && value is >= 0 and <= 1;
+    }
 }

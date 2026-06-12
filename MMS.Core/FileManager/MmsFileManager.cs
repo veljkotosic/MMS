@@ -12,6 +12,8 @@ public class MmsFileManager :
 {
     public MmsFile LoadImage(string path)
     {
+        ApplicationLimits.ValidateFileSize(path);
+
         using var stream = File.OpenRead(path);
         using var reader = new BinaryReader(stream);
         var crc32 = new Crc32();
@@ -44,11 +46,11 @@ public class MmsFileManager :
         
         if (header.MetadataLength > 0)
         {
-            meta = reader.ReadBytes((int)header.MetadataLength);
+            meta = ReadExactly(reader, checked((int)header.MetadataLength), "metadata");
             crc32.Append(meta);           
         }
         
-        var pixels = reader.ReadBytes((int)header.PixelsLength);
+        var pixels = ReadExactly(reader, checked((int)header.PixelsLength), "pixel data");
         crc32.Append(pixels);       
         
         var storedCrc = reader.ReadUInt32();
@@ -81,24 +83,34 @@ public class MmsFileManager :
 
         using var stream = File.Create(path);
         using var writer = new BinaryWriter(stream);
-        var crc32 = new Crc32();       
+        var crc32 = new Crc32();
 
         var headerBytes = StructureUtility.StructureToBytes(data.Header);
-        
         writer.Write(headerBytes);
-        crc32.Append(headerBytes);      
+        crc32.Append(headerBytes);
 
         if (data.Metadata.Length > 0)
         {
             writer.Write(data.Metadata);
-            crc32.Append(data.Metadata);         
+            crc32.Append(data.Metadata);
         }
 
         writer.Write(data.Pixels);
-        crc32.Append(data.Pixels);      
-
-        writer.Write(crc32.GetCurrentHashAsUInt32());       
+        crc32.Append(data.Pixels);
+        writer.Write(crc32.GetCurrentHashAsUInt32());
     }
 
     IImageResource IFileManager<IImageResource>.LoadImage(string path) => LoadImage(path);   
+
+    private static byte[] ReadExactly(BinaryReader reader, int length, string section)
+    {
+        var bytes = reader.ReadBytes(length);
+
+        if (bytes.Length != length)
+        {
+            throw new InvalidDataException($"Invalid {section}.");
+        }
+
+        return bytes;
+    }
 }

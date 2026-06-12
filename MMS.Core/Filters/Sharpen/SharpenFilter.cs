@@ -16,11 +16,7 @@ public sealed class SharpenFilter : IImageFilter
     public SharpenFilter(SharpenFilterOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-
-        if (options.Strength < 0 || double.IsNaN(options.Strength) || double.IsInfinity(options.Strength))
-        {
-            throw new ArgumentOutOfRangeException(nameof(options.Strength), "Invalid sharpen strength.");
-        }
+        ((IFilterOptions)options).ValidateAndThrow();
 
         _strength = (int)Math.Round(options.Strength * Scale);
         _centerWeight = Scale + 4 * _strength;

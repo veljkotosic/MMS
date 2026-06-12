@@ -3,8 +3,16 @@ using System.Drawing.Imaging;
 
 namespace MMS.Core.Filters.Grayscale;
 
-public sealed class GrayscaleFilter(GrayscaleFilterOptions options) : IImageFilter
+public sealed class GrayscaleFilter : IImageFilter
 {
+    private readonly GrayscaleFilterOptions _options;
+
+    public GrayscaleFilter(GrayscaleFilterOptions options)
+    {
+        ((IFilterOptions)options).ValidateAndThrow();
+        _options = options;
+    }
+
     public void Execute(Bitmap bitmap)
     {
         var width = bitmap.Width;
@@ -28,10 +36,10 @@ public sealed class GrayscaleFilter(GrayscaleFilterOptions options) : IImageFilt
                         var pixel = row + x * 4;
 
                         var gray = (byte)(
-                            (pixel[2] * options.RMul +
-                             pixel[1] * options.GMul +
-                             pixel[0] * options.BMul)
-                            >> options.Shift);
+                            (pixel[2] * _options.RMul +
+                             pixel[1] * _options.GMul +
+                             pixel[0] * _options.BMul)
+                            >> _options.Shift);
 
                         pixel[0] = gray;
                         pixel[1] = gray;

@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
+using Grpc.Core;
 using MMS.Contracts;
 using MMS.Core.Filters.Grayscale;
 using MMS.Core.Filters.BillAtkinson;
@@ -83,13 +84,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         FilterStaging = new FilterStagingViewModel();
 
-        LoadCommand = new MmsCommand(OnLoadImage);
-        SaveAsCommand = new MmsCommand(OnSaveImage, _ => _currentBitmap != null);
+        LoadCommand = new MmsCommand(OnLoadImage, _ => !IsApplyingFilters);
+        SaveAsCommand = new MmsCommand(OnSaveImage, _ => _currentBitmap != null && !IsApplyingFilters);
         ApplyCommand = new MmsCommand(OnApplyFilters, _ => CanApplyFilters());
         UndoCommand = new MmsCommand(OnUndo, _ => CanUndo());
         RedoCommand = new MmsCommand(OnRedo, _ => CanRedo());
         CenterImageCommand = new MmsCommand(OnCenterImage);
-        CloseCommand = new MmsCommand(OnCloseImage, _ => _currentBitmap != null);
+        CloseCommand = new MmsCommand(OnCloseImage, _ => _currentBitmap != null && !IsApplyingFilters);
 
         FilterStaging.SetApplyCommand(ApplyCommand);
         RefreshCommandStates();
@@ -108,21 +109,34 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
 
         var filePath = openFileDialog.FileName;
-        var fileManager = FileManagerFactory.GetFileManager(filePath);
+        Bitmap? normalizedBitmap = null;
 
-        using var loadedBitmap = fileManager.LoadImage(filePath).GetBitmap();
-        var normalizedBitmap = NormalizeBitmap(loadedBitmap);
+        try
+        {
+            var fileManager = FileManagerFactory.GetFileManager(filePath);
+            using var loadedBitmap = fileManager.LoadImage(filePath).GetBitmap();
+            normalizedBitmap = NormalizeBitmap(loadedBitmap);
+            var mainImage = CreateBitmapSource(normalizedBitmap);
 
-        DisposeCurrentBitmap();
-        ClearHistory();
+            DisposeCurrentBitmap();
+            ClearHistory();
 
-        _currentBitmap = normalizedBitmap;
-        MainImage = CreateBitmapSource(_currentBitmap);
+            _currentBitmap = normalizedBitmap;
+            normalizedBitmap = null;
+            MainImage = mainImage;
 
-        AddHistoryListing("Image Loaded From Disk", [], false);
-        AddLog($"Loaded image from disk: {Path.GetFileName(filePath)}");
-
-        RefreshCommandStates();
+            AddHistoryListing("Image Loaded From Disk", [], false);
+            AddLog($"Loaded image from disk: {Path.GetFileName(filePath)}");
+            RefreshCommandStates();
+        }
+        catch (Exception ex)
+        {
+            normalizedBitmap?.Dispose();
+            ShowOperationError(
+                "Load Error",
+                "The image could not be loaded. Verify that it is a valid supported image under 25 MB.",
+                ex);
+        }
     }
 
     private void OnSaveImage(object? obj)
@@ -148,39 +162,49 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var filePath = saveFileDialog.FileName;
         var extension = Path.GetExtension(filePath).ToLower();
 
-        if (extension == ".mms")
+        try
         {
-            var optionsWindow = new MmsSaveOptionsWindow
+            if (extension == ".mms")
             {
-                Owner = Application.Current.MainWindow
-            };
-
-            if (optionsWindow.ShowDialog() != true)
-            {
-                return;
-            }
-
-            var mmsFile = new MmsFile
-            {
-                Header = new MmsHeader
+                var optionsWindow = new MmsSaveOptionsWindow
                 {
-                    Colorspace = optionsWindow.SelectedColorspace,
-                    Compression = optionsWindow.SelectedCompression
+                    Owner = Application.Current.MainWindow
+                };
+
+                if (optionsWindow.ShowDialog() != true)
+                {
+                    return;
                 }
-            };
 
-            mmsFile.SetBitmap(currentBitmap);
+                var mmsFile = new MmsFile
+                {
+                    Header = new MmsHeader
+                    {
+                        Colorspace = optionsWindow.SelectedColorspace,
+                        Compression = optionsWindow.SelectedCompression
+                    }
+                };
 
-            var fileManager = new MmsFileManager();
-            fileManager.SaveImage(filePath, mmsFile);
-            AddLog($"Saved MMS file: {Path.GetFileName(filePath)}");
+                mmsFile.SetBitmap(currentBitmap);
+
+                var fileManager = new MmsFileManager();
+                fileManager.SaveImage(filePath, mmsFile);
+                AddLog($"Saved MMS file: {Path.GetFileName(filePath)}");
+            }
+            else
+            {
+                var fileManager = new StandardFileManager();
+                var resource = new StandardImageResource(currentBitmap);
+                fileManager.SaveImage(filePath, resource);
+                AddLog($"Saved image file: {Path.GetFileName(filePath)}");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var fileManager = new StandardFileManager();
-            var resource = new StandardImageResource(currentBitmap);
-            fileManager.SaveImage(filePath, resource);
-            AddLog($"Saved image file: {Path.GetFileName(filePath)}");
+            ShowOperationError(
+                "Save Error",
+                "The image could not be saved. Verify the destination and selected format.",
+                ex);
         }
     }
 
@@ -203,12 +227,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
             try
             {
                 var response = await _imageProcessorClient.ProcessAsync(_currentBitmap!, filterRequests);
+                BitmapSource mainImage;
+
+                try
+                {
+                    mainImage = CreateBitmapSource(response.Bitmap);
+                }
+                catch
+                {
+                    response.Bitmap.Dispose();
+                    throw;
+                }
 
                 RemoveFutureHistory();
                 DisposeCurrentBitmap();
             
                 _currentBitmap = response.Bitmap;
-                MainImage = CreateBitmapSource(_currentBitmap);
+                MainImage = mainImage;
 
                 UpdateProcessingTimings(response.Timing);
                 AddHistoryListing(executedFilters.Count == 1 ? executedFilters[0] : "Filter Batch", executedFilters, executedFilters.Count > 1);
@@ -219,7 +254,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 AddLog($"Filter processing failed: {ex.Message}");
                 MessageBox.Show(
-                    $"Remote filter processing failed: {ex.Message}",
+                    ex is RpcException { StatusCode: StatusCode.InvalidArgument }
+                        ? "The staged filters or image are invalid. Review the filter messages and try again."
+                        : "The image could not be processed. Verify that the processing service is running and try again.",
                     "Processing Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -231,8 +268,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception e)
         {
+            AddLog($"Failed to prepare filters: {e.Message}");
             MessageBox.Show(
-                $"Failed to apply filters: {e.Message}",
+                "The filters could not be prepared. Review the staged filter options.",
                 "Filter Error",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
@@ -318,7 +356,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         return _currentBitmap != null
             && !IsApplyingFilters
             && FilterStaging.Filters.Count > 0
-            && FilterStaging.Filters.All(filter => filter.SelectedType != ImageFilterType.Unknown);
+            && FilterStaging.Filters.All(filter => filter.IsValid);
     }
 
     private bool CanUndo()
@@ -522,6 +560,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void AddLog(string message)
     {
         ClientLogs.Add(new ClientLogEntry(DateTime.Now, message));
+    }
+
+    private void ShowOperationError(string title, string userMessage, Exception exception)
+    {
+        AddLog($"{title}: {exception.Message}");
+        MessageBox.Show(userMessage, title, MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     private static Bitmap NormalizeBitmap(Bitmap bitmap)

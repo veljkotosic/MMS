@@ -4,6 +4,7 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using MMS.Application.Abstract.Command;
 using MMS.Core.Filters;
+using MMS.Core.Utility;
 
 namespace MMS.Application.Commands.ProcessImage;
 
@@ -68,7 +69,7 @@ public sealed class ProcessImageCommandHandler
             throw new ArgumentException("Invalid filters.");
         }
 
-        var expectedSize = checked((long)command.Width * command.Height * BytesPerPixel);
+        var expectedSize = ApplicationLimits.ValidateProcessedImageSize(command.Width, command.Height);
         
         if (command.ImageData.LongLength != expectedSize)
         {

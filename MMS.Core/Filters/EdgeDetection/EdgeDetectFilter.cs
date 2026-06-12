@@ -13,11 +13,7 @@ public sealed class EdgeDetectFilter : IImageFilter
     public EdgeDetectFilter(EdgeDetectFilterOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-
-        if (!Enum.IsDefined(options.Direction))
-        {
-            throw new ArgumentOutOfRangeException(nameof(options.Direction));
-        }
+        ((IFilterOptions)options).ValidateAndThrow();
 
         _direction = options.Direction;
     }

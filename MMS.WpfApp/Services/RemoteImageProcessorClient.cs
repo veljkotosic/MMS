@@ -6,6 +6,7 @@ using Google.Protobuf;
 using Grpc.Core;
 using Grpc.Net.Client;
 using MMS.Contracts;
+using MMS.Core.Utility;
 
 namespace MMS.WpfApp.Services;
 
@@ -19,7 +20,10 @@ public sealed class RemoteImageProcessorClient
 
     public RemoteImageProcessorClient(string address = "http://localhost:5011")
     {
-        _channel = GrpcChannel.ForAddress(address);
+        _channel = GrpcChannel.ForAddress(address, new GrpcChannelOptions
+        {
+            MaxReceiveMessageSize = (int)ApplicationLimits.MaxDecodedImageBytes
+        });
         _client = new ImageProcessor.ImageProcessorClient(_channel);
     }
 
@@ -28,6 +32,13 @@ public sealed class RemoteImageProcessorClient
         IEnumerable<ImageFilter> filters,
         CancellationToken cancellationToken = default)
     {
+        ApplicationLimits.ValidateProcessedImageSize(bitmap.Width, bitmap.Height);
+        var filterList = filters.ToList();
+        if (filterList.Count == 0)
+        {
+            throw new ArgumentException("At least one filter is required.", nameof(filters));
+        }
+
         using var call = _client.ProcessImage(cancellationToken: cancellationToken);
         
         var header = new ImageHeader
@@ -36,7 +47,7 @@ public sealed class RemoteImageProcessorClient
             Height = bitmap.Height
         };
         
-        header.Filters.Add(filters);
+        header.Filters.Add(filterList);
 
         await call.RequestStream.WriteAsync(new ProcessImageRequest { Header = header }, cancellationToken);
 
@@ -65,9 +76,19 @@ public sealed class RemoteImageProcessorClient
             switch (response.PayloadCase)
             {
                 case ProcessImageResponse.PayloadOneofCase.Result:
+                    if (processingResult != null)
+                    {
+                        throw new InvalidDataException("The server returned more than one processing result.");
+                    }
+
                     processingResult = response.Result;
                     break;
                 case ProcessImageResponse.PayloadOneofCase.Chunk:
+                    if (responseBytes.Length + response.Chunk.Data.Length > ApplicationLimits.MaxDecodedImageBytes)
+                    {
+                        throw new InvalidDataException("The server response exceeds the maximum image size.");
+                    }
+
                     await responseBytes.WriteAsync(response.Chunk.Data.Memory, cancellationToken);
                     break;
             }
@@ -90,16 +111,18 @@ public sealed class RemoteImageProcessorClient
 
     private static byte[] ExtractBitmapBytes(Bitmap bitmap)
     {
-        var bytes = new byte[bitmap.Width * bitmap.Height * BytesPerPixel];
-        var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+        var width = bitmap.Width;
+        var height = bitmap.Height;
+        var bytes = new byte[checked(width * height * BytesPerPixel)];
+        var rect = new Rectangle(0, 0, width, height);
         
         var data = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
 
         try
         {
-            for (var y = 0; y < bitmap.Height; y++)
+            for (var y = 0; y < height; y++)
             {
-                Marshal.Copy(data.Scan0 + y * data.Stride, bytes, y * bitmap.Width * BytesPerPixel, bitmap.Width * BytesPerPixel);
+                Marshal.Copy(data.Scan0 + y * data.Stride, bytes, y * width * BytesPerPixel, width * BytesPerPixel);
             }
         }
         finally

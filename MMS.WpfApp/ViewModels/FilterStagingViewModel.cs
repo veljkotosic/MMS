@@ -60,6 +60,12 @@ public sealed class FilterStagingViewModel : INotifyPropertyChanged
         RefreshCommandStates();
     }
 
+    public void NotifyFilterOptionsChanged(FilterViewModel filter)
+    {
+        filter.RefreshValidation();
+        RefreshCommandStates();
+    }
+
     private void AddFilter()
     {
         var filter = new FilterViewModel();
@@ -131,7 +137,9 @@ public sealed class FilterStagingViewModel : INotifyPropertyChanged
 
     private void OnFilterPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(FilterViewModel.SelectedType) or nameof(FilterViewModel.Options))
+        if (e.PropertyName is nameof(FilterViewModel.SelectedType)
+            or nameof(FilterViewModel.Options)
+            or nameof(FilterViewModel.IsValid))
         {
             RefreshCommandStates();
         }

@@ -11,6 +11,7 @@ public sealed class BillAtkinsonFilter : IImageFilter
     public BillAtkinsonFilter(BillAtkinsonFilterOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+        ((IFilterOptions)options).ValidateAndThrow();
         _threshold = options.Threshold;
     }
 

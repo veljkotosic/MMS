@@ -17,11 +17,7 @@ public sealed class TimeWarpFilter : IImageFilter
     public TimeWarpFilter(TimeWarpFilterOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-
-        if (double.IsNaN(options.Radius) || double.IsNaN(options.U) || double.IsNaN(options.V) || double.IsNaN(options.Strength) || double.IsInfinity(options.Strength))
-        {
-            throw new ArgumentOutOfRangeException(nameof(options), "Invalid option parameters.");
-        }
+        ((IFilterOptions)options).ValidateAndThrow();
 
         _strength = options.Strength;
         _radius = options.Radius;

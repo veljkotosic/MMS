@@ -11,11 +11,7 @@ public sealed class PixelateFilter : IImageFilter
     public PixelateFilter(PixelateFilterOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-
-        if (options.BlockSize < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(options.BlockSize), "Invalid block size.");
-        }
+        ((IFilterOptions)options).ValidateAndThrow();
 
         _blockSize = options.BlockSize;
     }

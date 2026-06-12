@@ -2,13 +2,14 @@ using System.ComponentModel;
 
 namespace MMS.Core.Filters.BillAtkinson;
 
-public sealed class BillAtkinsonFilterOptions
+public sealed class BillAtkinsonFilterOptions : IFilterOptions
 {
-    [Category("Dithering")]
+    [Category("BillAtkinson")]
     [DisplayName("Threshold")]
-    public int Threshold
+    public int Threshold { get; set; } = 128;
+
+    public string? Validate()
     {
-        get;
-        set => field = Math.Clamp(value, 0, 255);
-    } = 128;
+        return Threshold is < 0 or > 255 ? "Invalid threshold." : null;
+    }
 }

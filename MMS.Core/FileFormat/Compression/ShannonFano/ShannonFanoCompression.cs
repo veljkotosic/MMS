@@ -1,3 +1,5 @@
+using MMS.Core.Utility;
+
 namespace MMS.Core.FileFormat.Compression.ShannonFano;
 
 public class ShannonFanoCompression :
@@ -134,6 +136,11 @@ public class ShannonFanoCompression :
         using var dataReader = new BinaryReader(dataStream);
         
         var originalLength = dataReader.ReadInt32();
+        if (originalLength < 0 || originalLength > ApplicationLimits.MaxDecodedImageBytes)
+        {
+            throw new InvalidDataException("Invalid data length.");
+        }
+
         var result = new byte[originalLength];
         var resultIndex = 0;
 

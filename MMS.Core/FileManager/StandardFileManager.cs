@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using MMS.Core.ImageResource;
+using MMS.Core.Utility;
 
 namespace MMS.Core.FileManager;
 
@@ -10,7 +11,19 @@ public class StandardFileManager :
 {
     public StandardImageResource LoadImage(string path)
     {
-        return new StandardImageResource(new Bitmap(path));
+        ApplicationLimits.ValidateFileSize(path);
+        var bitmap = new Bitmap(path);
+
+        try
+        {
+            ApplicationLimits.ValidateProcessedImageSize(bitmap.Width, bitmap.Height);
+            return new StandardImageResource(bitmap);
+        }
+        catch
+        {
+            bitmap.Dispose();
+            throw;
+        }
     }
 
     public void SaveImage(string path, IImageResource data) => SaveImage(path, (StandardImageResource)data);
@@ -27,7 +40,7 @@ public class StandardFileManager :
             ".gif" => ImageFormat.Gif,
             _ => throw new NotSupportedException($"Unsupported file format: {extension}")
         };
-        
+
         data.GetBitmap().Save(path, format);
     }
 

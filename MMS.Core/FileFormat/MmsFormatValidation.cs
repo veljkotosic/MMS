@@ -1,5 +1,6 @@
 using MMS.Core.FileFormat.Colorspace;
 using MMS.Core.FileFormat.Compression;
+using MMS.Core.Utility;
 
 namespace MMS.Core.FileFormat;
 
@@ -22,6 +23,8 @@ internal static class MmsFormatValidation
             throw new InvalidDataException("Invalid dimensions.");
         }
 
+        ApplicationLimits.ValidateProcessedImageSize(checked((int)header.Width), checked((int)header.Height));
+
         var expectedChannels = GetChannelCount(header.Colorspace);
 
         if (header.Channels != expectedChannels)
@@ -37,6 +40,11 @@ internal static class MmsFormatValidation
         if (header.Compression == MmsCompression.Mpeg1 && header.Colorspace != MmsColorspace.YCbCr)
         {
             throw new InvalidDataException("MPEG-1 compression requires the YCbCr colorspace.");
+        }
+
+        if ((long)header.MetadataLength + header.PixelsLength > ApplicationLimits.MaxFileBytes)
+        {
+            throw new InvalidDataException("File exceeds 25 MB limit.");
         }
     }
 }
